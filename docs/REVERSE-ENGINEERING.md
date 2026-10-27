@@ -93,8 +93,15 @@ speed / brightness / option 按灯效编码进 report 字节 1–3。
      HID 走 `NtDeviceIoControlFile` / `NtWriteFile`,IOCTL_HID_GET_FEATURE=0xB0192 已定位到 0x3c4700);
    - 无 sudo 环境可用 `python3 -m venv --without-pip` + get-pip.py 装 capstone/pefile
      自写反汇编脚本(工具链在 /tmp/revenv)。
-   待办:定位发送路径(WriteFile/NtWriteFile)前的 7/8 字节校验和循环;
-   或键盘插到 Linux 后用 node-hid 对常见算法(累加/XOR/CRC8)做在线验证。
+   - 反汇编进展:所有系统调用经运行期解析的指针表(0x7e0xxx 槽位,如 [0x7e0124]=
+     DeviceIoControl)发起,导入表 IAT 无直接调用点;关键字符串(check_sum_type、
+     hid_send_feature_report)无 .text 直接 xref(字符串经邻近锚点寻址),纯静态定位
+     校验和函数成本高。
+   待办(纯 Linux 两条路,任选):
+   a) **插键盘到本机做实机验证(最快)**:node-hid 直接对 /dev/hidraw 收发,
+      先验证假说 "checkSumType=2 = 免校验直发"(JS 注释 2-----init),
+      再依次试 累加/XOR/CRC8 等候选算法,看哪种返回有效响应;
+   b) 免安装 Ghidra(便携 JDK + Ghidra zip,无需 root)继续静态逆。
 2. 设备数据库(`device_type` 表)的初始数据:首次运行由服务器下发或内置,需确认
    Babyface 对应的型号条目(用于按键矩阵布局)。
 3. `iot_driver.exe` 还承担厂商事件流(电量/睡眠/重置/麦克风),TUI 需自行轮询
