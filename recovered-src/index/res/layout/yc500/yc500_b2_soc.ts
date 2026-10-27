@@ -1,0 +1,40 @@
+export const yc500_b2_soc = {
+  deltX: 0,
+  deltY: 0,
+  layout: [
+    {
+      keyName: 'U-',
+      value: 0x0300ea00,
+      knob: true,
+      x: 307,
+      y: -103,
+      w: 36,
+      h: 128,
+    },
+    {
+      keyName: 'Mute',
+      value: 0x0300e200,
+      x: 355,
+      y: -103,
+      w: 36,
+      h: 128,
+    },
+    {
+      keyName: 'U+',
+      value: 0x0300e900,
+      knob: true,
+      x: 402,
+      y: -103,
+      w: 36,
+      h: 128,
+    },
+    {
+      keyName: 'Enter',
+      value: 40,
+      x: 473,
+      y: -70,
+      w: 70,
+      h: 145,
+    },
+  ],
+}

@@ -1,0 +1,181 @@
+syntax = "proto3";
+
+package driver;
+
+// 逆向自 Domikey Driver (iot_driver.exe 配套渲染层 driver_pb.js / driver_grpc_pb.js)
+// gRPC 服务监听 127.0.0.1:3814 (明文, 无 TLS)
+// 原始 .proto 未随软件发布, 本文件按生成代码的 getter/setter 字段逐一还原
+
+// ============ 设备控制 ============
+
+message SendMsg {
+  string devicepath = 1;
+  bytes msg = 2;
+  uint32 checksumtype = 3;   // 0=7字节校验 1=8字节校验 2=init(驱动内部处理)
+  uint32 dangledevtype = 4;  // 0=直连设备 1=2.4G接收器键盘 2=2.4G接收器鼠标
+}
+
+message ResSend {
+  string err = 1;            // 空字符串表示成功
+}
+
+message ReadMsg {
+  string devicepath = 1;
+}
+
+message ResRead {
+  bytes msg = 1;
+  string err = 2;
+}
+
+message SetLight {
+  string devicepath = 1;
+  uint32 lighttype = 2;      // 0=音乐律动 1=屏幕数据 2=停止发送
+  uint32 screenId = 3;
+  uint32 dangledevtype = 4;
+}
+
+// ============ 设备枚举 ============
+
+message Device {
+  string id = 1;
+  uint32 pid = 2;
+  uint32 vid = 3;
+  string path = 4;
+  bool isonline = 5;
+  uint32 battery = 6;
+  uint32 devtype = 7;
+  bool is24 = 8;
+}
+
+message DangleCommon {
+  string path = 1;
+  uint32 vid = 2;
+  uint32 pid = 3;
+  string keyboard = 4;
+  int32 keyboardId = 5;
+  string mouse = 6;
+  int32 mouseId = 7;
+}
+
+message DJDev {
+  oneof oneofdev {
+    Device dev = 1;
+    DangleCommon danglecommondev = 2;
+  }
+}
+
+message DeviceList {
+  repeated DJDev devlist = 1;
+  string type = 2;
+}
+
+message DangleStatus {
+  oneof dangledev {
+    bool empty = 1;
+    Status24 status = 2;
+  }
+}
+
+message Status24 {
+  uint32 battery = 1;
+  bool isOnline = 2;
+}
+
+message VenderMsg {
+  bytes msg = 1;             // 厂商事件, 如 [0xf,1,0]=开始 [0xf,0,0]=停止
+                             // [0x80,0,0]=麦克风 [0xd,0,0]=重置 [0x13,0,0]=睡眠
+}
+
+message SystemInfo {
+  float cpuUsage = 1;
+  float cpuTemperater = 2;
+  uint64 memUsed = 3;
+  uint64 memTotal = 4;
+  uint64 diskSpceAvailable = 5;   // 原字段名即如此 (拼写保留)
+  uint64 diskSpaceTotal = 6;
+  uint64 netWorkTotalUp = 7;
+  uint64 netWorkTotalDown = 8;
+}
+
+// ============ 无线 / 升级 / 麦克风 ============
+
+message WirelessLoopStatus {
+  bool lock = 1;             // true=暂停无线轮询
+}
+
+message OTAUpgrade {
+  string devpath = 1;
+  bytes fileBuf = 2;
+}
+
+message Progress {
+  uint32 progress = 1;
+  string err = 2;
+}
+
+message Empty {}
+
+message MuteMicrophone {
+  bool needMute = 1;
+}
+
+message MicrophoneMuteStatus {
+  bool isMute = 1;
+  string err = 2;
+}
+
+// ============ 驱动内置 KV 数据库 ============
+
+message InsertDb {
+  string dbpath = 1;
+  bytes key = 2;
+  bytes value = 3;
+}
+
+message DeleteItem {
+  string dbpath = 1;
+  bytes key = 2;
+}
+
+message GetItem {
+  string dbpath = 1;
+  bytes key = 2;
+}
+
+message Item {
+  bytes value = 1;
+  string errStr = 2;
+}
+
+message GetAll {
+  string dbpath = 1;
+}
+
+message AllList {
+  repeated bytes dataList = 1;
+  string errStr = 2;
+}
+
+// ============ 服务定义 ============
+
+service DriverGrpc {
+  rpc sendMsg(SendMsg) returns (ResSend);
+  rpc readMsg(ReadMsg) returns (ResRead);
+  rpc sendRawFeature(SendMsg) returns (ResSend);
+  rpc readRawFeature(ReadMsg) returns (ResRead);
+  rpc setLightType(SetLight) returns (ResSend);
+  rpc watchDevList(Empty) returns (stream DeviceList);
+  rpc watchVender(Empty) returns (stream VenderMsg);
+  rpc watchSystemInfo(Empty) returns (stream SystemInfo);
+  rpc changeWirelessLoopStatus(WirelessLoopStatus) returns (ResSend);
+  rpc upgradeOTAGATT(OTAUpgrade) returns (stream Progress);
+  rpc muteMicrophone(MuteMicrophone) returns (ResSend);
+  rpc toggleMicrophoneMute(Empty) returns (ResSend);
+  rpc getMicrophoneMute(Empty) returns (MicrophoneMuteStatus);
+  rpc insertDb(InsertDb) returns (ResSend);
+  rpc deleteItemFromDb(DeleteItem) returns (ResSend);
+  rpc getItemFromDb(GetItem) returns (Item);
+  rpc getAllKeysFromDb(GetAll) returns (AllList);
+  rpc getAllValuesFromDb(GetAll) returns (AllList);
+}

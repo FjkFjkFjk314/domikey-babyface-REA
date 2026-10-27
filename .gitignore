@@ -1,0 +1,4 @@
+# extracted Electron app: skip vendored dependencies (original code is in recovered-src/)
+extracted-app/app/node_modules/
+tui/node_modules/
+tui/dist/
