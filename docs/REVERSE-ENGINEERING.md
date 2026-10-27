@@ -72,9 +72,29 @@ speed / brightness / option 按灯效编码进 report 字节 1–3。
 ## 6. 已知未知项(TUI 实现前需解决)
 
 1. **校验和算法**:渲染层只把 `checkSumType`(0=7字节 / 1=8字节 / 2=init)发给驱动,
-   实际校验和在 `iot_driver.exe` 内计算。需要:
-   - 用 REA 原生分析反编译 `iot_driver.exe`(需 Hopper/Ghidra/IDA),或
-   - 在 Windows 上跑官方软件 + USBPcap/Wireshark 抓包推断。
+   实际校验和在 `iot_driver.exe` 内计算。
+   **无需 Windows 即可继续** — `iot_driver.exe` 是 Rust 程序(工程名 `dj_hid_sdk_rs`),
+   模块结构已从 panic 字符串还原:
+
+   ```
+   src\main.rs
+   src\dj_dev_api\cmd_list.rs        (struct CMDList)
+   src\dj_dev_api\dangle_common.rs   (2.4G 接收器)
+   src\dj_dev_api\ble_hid.rs / yzw_boot.rs / yzw_vender.rs
+   src\dj_hid_device\mod.rs
+   src\dj_hid_device\dj_hid\mod.rs
+   src\dj_hid_device\dj_hid\hid_normal.rs   (USB HID: hid_send_feature_report / hid_get_feature_report)
+   src\dj_hid_device\dj_hid\hid_ble.rs      (BLE, 用 btleplug crate)
+   src\dj_hid_device\vender_dev.rs
+   ```
+
+   已验证的纯 Linux 手段:
+   - REA 内置 `inspect-pe-imports` 无需任何引擎即可分析 PE(结果:ntdll/ws2_32/kernel32…,
+     HID 走 `NtDeviceIoControlFile` / `NtWriteFile`,IOCTL_HID_GET_FEATURE=0xB0192 已定位到 0x3c4700);
+   - 无 sudo 环境可用 `python3 -m venv --without-pip` + get-pip.py 装 capstone/pefile
+     自写反汇编脚本(工具链在 /tmp/revenv)。
+   待办:定位发送路径(WriteFile/NtWriteFile)前的 7/8 字节校验和循环;
+   或键盘插到 Linux 后用 node-hid 对常见算法(累加/XOR/CRC8)做在线验证。
 2. 设备数据库(`device_type` 表)的初始数据:首次运行由服务器下发或内置,需确认
    Babyface 对应的型号条目(用于按键矩阵布局)。
 3. `iot_driver.exe` 还承担厂商事件流(电量/睡眠/重置/麦克风),TUI 需自行轮询
