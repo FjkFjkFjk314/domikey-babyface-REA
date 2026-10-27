@@ -1,0 +1,5 @@
+module.exports = {
+    "AppVersion": "280.2.75",
+    "SDKVersion": "v159",
+    "BaseAppVersion": "1.0.0"
+};
