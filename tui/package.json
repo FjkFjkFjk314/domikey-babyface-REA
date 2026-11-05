@@ -1,16 +1,19 @@
 {
   "name": "domikey-tui",
-  "version": "0.1.0",
-  "description": "Lightweight TUI replacement for the Domikey Driver (reverse-engineered)",
+  "version": "0.2.0",
+  "description": "Lightweight Web & TUI replacement for the Domikey Babyface Driver (reverse-engineered)",
   "license": "MIT",
   "type": "module",
   "bin": {
-    "domikey-tui": "./dist/cli.js"
+    "domikey-tui": "./dist/cli.js",
+    "domikey-web": "./dist/web-server.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",
-    "start": "node dist/cli.js"
+    "start": "node dist/cli.js",
+    "web": "node dist/web-server.js",
+    "test": "node dist/test-protocol.js"
   },
   "dependencies": {
     "ink": "^5.0.1",
